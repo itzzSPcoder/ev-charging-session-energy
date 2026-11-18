@@ -1,0 +1,53 @@
+group_id: G171
+problem_id: MP298
+data_issues:
+  leaking_column:
+    present: true
+    column: kwh_billed_in_app
+  unit_mixup:
+    present: false
+    column: null
+    group_value: null
+    factor: null
+  sentinel_value:
+    present: false
+    column: null
+    value: null
+    count: null
+  duplicate_rows:
+    present: true
+    count: 40
+  stuck_sensor:
+    present: true
+    column: battery_start_pct
+    start_date: '2026-03-13'
+    end_date: '2026-04-05'
+  target_typos:
+    present: false
+    count: null
+  spelling_variants:
+    present: true
+    column: vehicle
+    true_levels: 3
+tracking:
+  experiment_name: ev_charging_session_energy
+  best_run_id: 50450d02ac7b4a80a63c150fce55d9aa
+  registered_model_name: ev_charging_model
+  champion_version: 2
+monitoring:
+  psi:
+    battery_start_pct: 0.0282
+    session_minutes: 0.0328
+    charger_kw: 0.0311
+    temp_c: 3.6203
+    vehicle_age_yr: 0.0274
+    queue_before: 0.0275
+  most_drifted_feature: temp_c
+  mae_by_group:
+    Highway: 5.1418
+    Mall: 7.0948
+    Residential: 5.6838
+  worst_served_group: Mall
+  mae_v1_on_check: 5.8593
+  mae_v2_on_check: 2.5028
+  decision: promote

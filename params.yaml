@@ -1,0 +1,36 @@
+data:
+  raw_train_path: "data/raw/train.csv"
+  raw_later_path: "data/raw/later.csv"
+  raw_holdout_path: "data/raw/holdout_features.csv"
+  predictions_path: "predictions/holdout_predictions.csv"
+  model_output_path: "models/model.joblib"
+  findings_output_path: "reports/findings.yaml"
+
+features:
+  numeric:
+    - "battery_start_pct"
+    - "session_minutes"
+    - "charger_kw"
+    - "temp_c"
+    - "vehicle_age_yr"
+    - "queue_before"
+  categorical:
+    - "vehicle"
+    - "station_type"
+  target: "energy_kwh"
+  leaking_column: "kwh_billed_in_app"
+
+tracking:
+  tracking_uri: "sqlite:///mlflow.db"
+  experiment_name: "ev_charging_session_energy"
+  registered_model_name: "ev_charging_model"
+
+model:
+  v1_ridge_alpha: 1.0
+  v1_rf_n_estimators: 100
+  v1_gb_n_estimators: 100
+  v1_gb_learning_rate: 0.1
+  v1_gb_max_depth: 4
+  random_state: 42
+  promotion_threshold: 0.15
+
