@@ -20,6 +20,7 @@ def test_clean_vehicle_name_variations():
     assert clean_vehicle_name("Three_Wheeler") == "three_wheeler"
     assert clean_vehicle_name("three wheeler") == "three_wheeler"
     assert clean_vehicle_name("thr.") == "three_wheeler"
+    assert clean_vehicle_name(" thr.") == "three_wheeler"
 
 
 def test_clean_dataframe_drops_duplicates():
@@ -33,6 +34,32 @@ def test_clean_dataframe_drops_duplicates():
     cleaned = clean_dataframe(df, drop_stuck=False)
     assert len(cleaned) == 2
     assert cleaned["vehicle"].tolist() == ["car", "two_wheeler"]
+
+
+def test_clean_dataframe_filters_stuck_sensor():
+    """Test that records during the stuck sensor period (2026-03-13 to 2026-04-05) are filtered out."""
+    df = pd.DataFrame({
+        "record_id": ["R1", "R2", "R3", "R4"],
+        "date": ["2026-03-12", "2026-03-13", "2026-04-05", "2026-04-06"],
+        "battery_start_pct": [47, 47, 47, 55],
+        "vehicle": ["car", "car", "car", "car"],
+    })
+    cleaned = clean_dataframe(df, drop_stuck=True)
+    assert len(cleaned) == 2
+    assert cleaned["record_id"].tolist() == ["R1", "R4"]
+
+
+def test_clean_dataframe_drops_leaking_column():
+    """Test that leaking column kwh_billed_in_app is dropped from the cleaned dataframe."""
+    df = pd.DataFrame({
+        "record_id": ["R1", "R2"],
+        "date": ["2026-01-01", "2026-01-02"],
+        "battery_start_pct": [30, 40],
+        "kwh_billed_in_app": [15.2, 22.1],
+        "vehicle": ["car", "car"],
+    })
+    cleaned = clean_dataframe(df, drop_stuck=False)
+    assert "kwh_billed_in_app" not in cleaned.columns
 
 
 def test_detect_data_issues_synthetic():
@@ -55,4 +82,3 @@ def test_detect_data_issues_synthetic():
     assert issues["duplicate_rows"]["count"] == 1
     assert issues["spelling_variants"]["present"] is True
     assert issues["spelling_variants"]["true_levels"] == 1
-

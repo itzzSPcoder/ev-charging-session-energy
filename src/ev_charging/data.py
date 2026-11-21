@@ -15,9 +15,9 @@ def clean_vehicle_name(val: str) -> str:
     if pd.isna(val):
         return val
     s = str(val).lower().strip().replace(" ", "_").rstrip(".")
-    if "thr" in s:
+    if "thr" in s or "3" in s:
         return "three_wheeler"
-    elif "two" in s:
+    elif "two" in s or "2" in s:
         return "two_wheeler"
     elif "car" in s:
         return "car"
@@ -215,6 +215,10 @@ def clean_dataframe(df: pd.DataFrame, drop_stuck: bool = True) -> pd.DataFrame:
     # 3. Handle stuck sensor period if present and drop_stuck is True
     if drop_stuck and "date" in df_clean.columns:
         df_clean = df_clean[~((df_clean["date"] >= "2026-03-13") & (df_clean["date"] <= "2026-04-05"))].reset_index(drop=True)
+
+    # 4. Drop leaking column kwh_billed_in_app from features if present
+    if "kwh_billed_in_app" in df_clean.columns:
+        df_clean = df_clean.drop(columns=["kwh_billed_in_app"])
 
     return df_clean
 
