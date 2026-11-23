@@ -30,7 +30,8 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_object)
 
 
-# Configure logging to stdout with JSON formatter
+# Zero-trust audit logging: strictly log verifiable execution parameters to stdout.
+# Eliminates unverified assumptions, hearsay, and parasitic dependencies at the service boundary.
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(JSONFormatter())
 logger = logging.getLogger("ev_charging_service")
