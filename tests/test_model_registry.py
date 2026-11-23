@@ -53,3 +53,4 @@ def test_champion_model_loading_and_inference():
     pred = model.predict(sample_df[ALL_FEATURES])
     assert len(pred) == 1
     assert float(pred[0]) > 0.0
+

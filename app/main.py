@@ -8,6 +8,7 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.ev_charging.data import clean_vehicle_name
@@ -78,6 +79,10 @@ app = FastAPI(
     description="API for predicting energy delivered during an EV charging session.",
     lifespan=lifespan
 )
+
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 @app.get("/", include_in_schema=False)

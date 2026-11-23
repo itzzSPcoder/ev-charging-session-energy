@@ -3,231 +3,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Dehradun Green Charge Network --- 3D EV Simulator</title>
+    <title>Dehradun Green Charge Network - Interactive 3D EV Simulator</title>
     <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <!-- Three.js & OrbitControls with local and CDN fallbacks -->
+    <script src="/static/js/three.min.js"></script>
+    <script src="/static/js/OrbitControls.js"></script>
+    <script src="/static/js/GLTFLoader.js"></script>
+    <script>
+        // CDN Fallback if opened as standalone local file without server
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');
+        }
+        if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"><\/script>');
+        }
+    </script>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: #0B0F19;
-            color: #F3F4F6;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow-x: hidden;
         }
-        .neon-glow {
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
-        }
-        .neon-glow-cyan {
-            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
-        }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.75);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .clean-panel {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
         }
         input[type="range"] {
-            accent-color: #10B981;
+            accent-color: #059669;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
 
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-gray-800 bg-gray-950/80 px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200 bg-white/95 px-6 py-3.5 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md shadow-xs">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-xl font-bold shadow-lg shadow-emerald-500/20">
-                ⚡
+            <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+                <!-- Zap SVG -->
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
             </div>
             <div>
-                <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     Dehradun Green Charge Network
-                    <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">3D Sim v2.0</span>
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">Interactive 3D</span>
                 </h1>
-                <p class="text-xs text-gray-400">Problem MP298 | Group G171 | SCSE3040 MLOps Champion Pipeline</p>
+                <p class="text-xs text-slate-500">Problem MP298 | Group G171 | SCSE3040 MLOps Champion Pipeline</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 text-xs font-mono">
-            <div class="flex items-center gap-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-gray-300">Model: <b class="text-emerald-400">@champion (v2)</b></span>
+        <div class="flex items-center gap-3 text-xs font-mono">
+            <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-slate-600 font-sans text-xs">Model: <b class="text-emerald-700 font-mono">@champion (v2)</b></span>
             </div>
-            <a href="/docs" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700 transition">
-                API Docs ↗
+            <a href="/docs" target="_blank" class="bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-300 transition font-sans text-xs font-medium flex items-center gap-1 shadow-xs">
+                <span>API Docs</span>
+                <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
             </a>
         </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Main Workspace -->
     <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto w-full">
 
         <!-- Left 3D Viewport (7 cols) -->
         <div class="lg:col-span-7 flex flex-col gap-4">
-            <div class="relative w-full h-[460px] glass-panel rounded-2xl overflow-hidden border border-gray-800 flex flex-col items-center justify-center">
-                <!-- 3D Canvas -->
-                <canvas id="evCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+            <div id="canvasContainer" class="relative w-full h-[500px] bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                <!-- Real Photorealistic 3D Sketchfab Iframe with continuous auto-rotation -->
+                <iframe id="sketchfabIframe"
+                        class="absolute inset-0 w-full h-full border-0 z-0"
+                        title="3D EV Model"
+                        allow="autoplay; fullscreen; xr-spatial-tracking"
+                        xr-spatial-tracking
+                        execution-while-out-of-viewport
+                        execution-while-not-rendered
+                        web-share
+                        src="https://sketchfab.com/models/d1f59f287da14c93a43bebf231d4124d/embed?autostart=1&autospin=0.35&internal=1&ui_infos=0&ui_watermark=0&ui_hint=0">
+                </iframe>
 
-                <!-- Floating 3D HUD Stats -->
-                <div class="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
-                    <div class="bg-gray-950/80 border border-gray-800/80 px-3 py-1.5 rounded-lg backdrop-blur text-xs flex items-center gap-2">
-                        <span class="text-gray-400">Station:</span>
-                        <span id="hudStation" class="text-emerald-400 font-bold">Shopping Mall</span>
+                <!-- Top Floating HUD -->
+                <div class="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-white/95 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm text-xs flex items-center gap-2">
+                            <span class="text-slate-500 font-medium">Station:</span>
+                            <span id="hudStation" class="text-emerald-700 font-bold">Shopping Mall</span>
+                        </div>
+                        <div class="bg-white/95 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm text-xs flex items-center gap-2">
+                            <span class="text-slate-500 font-medium">Charger:</span>
+                            <span id="hudCharger" class="text-blue-700 font-mono font-bold">30.0 kW</span>
+                        </div>
                     </div>
-                    <div class="bg-gray-950/80 border border-gray-800/80 px-3 py-1.5 rounded-lg backdrop-blur text-xs flex items-center gap-2">
-                        <span class="text-gray-400">Charger:</span>
-                        <span id="hudCharger" class="text-cyan-400 font-mono font-bold">30.0 kW</span>
+                    <!-- Model Tag Badge -->
+                    <div id="hudModelBadge" class="bg-white/95 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm text-xs font-semibold text-slate-800 w-fit flex items-center gap-2">
+                        <!-- Car SVG -->
+                        <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h8M8 17a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 104 0 2 2 0 00-4 0zM5 11l2-5h10l2 5M3 11h18v6H3v-6z"/>
+                        </svg>
+                        <span id="hudModelTitle">3D Model BMW i7</span>
                     </div>
                 </div>
 
-                <div class="absolute top-4 right-4 flex gap-2">
-                    <button id="btnOrbit" class="bg-gray-900/80 hover:bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-gray-800 backdrop-blur transition flex items-center gap-1.5">
-                        🔄 <span>Auto-Rotate: ON</span>
+                <!-- Top Right Controls -->
+                <div class="absolute top-4 right-4 flex gap-2 z-10">
+                    <button id="btnEngineMode" class="bg-white hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 shadow-xs font-medium transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Sketchfab 3D</span>
                     </button>
-                    <button id="btnSound" class="bg-gray-900/80 hover:bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-gray-800 backdrop-blur transition flex items-center gap-1.5">
-                        🔊 <span>Sound: ON</span>
+                    <button id="btnSound" class="bg-white hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 shadow-xs font-medium transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        </svg>
+                        <span id="txtSound">Sound: ON</span>
+                    </button>
+                    <button id="btnOrbit" class="bg-white hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 shadow-xs font-medium transition hidden items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>Rotate: ON</span>
+                    </button>
+                    <button id="btnResetCam" class="bg-white hover:bg-slate-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-300 shadow-xs font-medium transition hidden items-center gap-1.5">
+                        <span>Center</span>
                     </button>
                 </div>
 
-                <!-- Live Charge HUD overlay at bottom of 3D Canvas -->
-                <div class="absolute bottom-4 inset-x-4 glass-panel rounded-xl p-3 border border-gray-800/90 flex items-center justify-between">
+                <!-- Bottom Charge Bar overlay -->
+                <div class="absolute bottom-4 inset-x-4 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-slate-200 shadow-md flex items-center justify-between z-10 pointer-events-auto">
                     <div class="flex items-center gap-3">
-                        <div id="statusIndicator" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                        <div id="statusIndicator" class="w-3 h-3 rounded-full bg-emerald-500 shadow-sm"></div>
                         <div>
-                            <div id="chargingStatusText" class="text-xs font-bold text-gray-300">Ready to Plug-In</div>
-                            <div id="socText" class="text-[11px] text-gray-500 font-mono">SOC: 25% → ?%</div>
+                            <div id="chargingStatusText" class="text-xs font-bold text-slate-800">Vehicle Docked & Ready</div>
+                            <div id="socText" class="text-[11px] text-slate-500 font-mono">SOC: 25% → ?%</div>
                         </div>
                     </div>
 
-                    <button id="btnPlug" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center gap-2">
-                        ⚡ <span>Plug In & Start</span>
+                    <button id="btnPlug" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow-sm transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span>Plug In & Start Charging</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Real-Time Output KPI Cards -->
+            <!-- Sketchfab Model Attribution Footer -->
+            <div id="sketchfabAttribution" class="text-xs text-slate-500 px-3 py-2 flex items-center justify-between bg-white rounded-xl border border-slate-200 shadow-xs">
+                <span id="attrModelText" class="text-[11px]">
+                    3D Model: <a id="attrModelLink" href="https://sketchfab.com/3d-models/3d-model-bmw-i7-d1f59f287da14c93a43bebf231d4124d" target="_blank" rel="nofollow" class="font-semibold text-emerald-700 hover:underline">3D Model BMW i7</a> by <a id="attrAuthor" href="https://sketchfab.com/zizian" target="_blank" rel="nofollow" class="font-semibold text-emerald-700 hover:underline">zizian</a> on <a href="https://sketchfab.com" target="_blank" rel="nofollow" class="font-semibold text-emerald-700 hover:underline">Sketchfab</a>
+                </span>
+                <span class="text-slate-400 font-mono text-[10px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Continuous Auto-Rotate</span>
+            </div>
+
+            <!-- Real-Time Output Cards -->
             <div class="grid grid-cols-3 gap-4">
-                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
-                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">⚡ Energy Delivered</div>
-                    <div id="metricKwh" class="text-2xl font-black text-emerald-400 font-mono">-- kWh</div>
-                    <div class="text-[10px] text-gray-500 mt-1">Predicted by Model v2</div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs text-center">
+                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span>Energy Delivered</span>
+                    </div>
+                    <div id="metricKwh" class="text-2xl font-black text-emerald-700 font-mono">-- kWh</div>
+                    <div class="text-[11px] text-slate-400 mt-1">Predicted by Model v2</div>
                 </div>
 
-                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
-                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">💰 Estimated Bill</div>
-                    <div id="metricCost" class="text-2xl font-black text-cyan-400 font-mono">₹ --</div>
-                    <div class="text-[10px] text-gray-500 mt-1">@ ₹9.50 / kWh Tariff</div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs text-center">
+                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Estimated Bill</span>
+                    </div>
+                    <div id="metricCost" class="text-2xl font-black text-slate-900 font-mono">₹ --</div>
+                    <div class="text-[11px] text-slate-400 mt-1">@ ₹9.50 / kWh Tariff</div>
                 </div>
 
-                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
-                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">⏱️ Latency / Rate</div>
-                    <div id="metricRate" class="text-2xl font-black text-indigo-400 font-mono">-- kW</div>
-                    <div id="metricLatency" class="text-[10px] text-gray-500 mt-1">Inference: &lt; 2 ms</div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs text-center">
+                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Inference Rate</span>
+                    </div>
+                    <div id="metricRate" class="text-2xl font-black text-indigo-700 font-mono">-- kW</div>
+                    <div id="metricLatency" class="text-[11px] text-slate-400 mt-1">Latency: &lt; 2 ms</div>
                 </div>
             </div>
         </div>
 
         <!-- Right Control Panel (5 cols) -->
         <div class="lg:col-span-5 flex flex-col gap-4">
-            <div class="glass-panel rounded-2xl p-5 border border-gray-800 flex flex-col gap-4">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-gray-200">Session Controls</h2>
-                    <span class="text-xs text-emerald-400 font-mono">Real-Time Inference</span>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        <span>Simulation Parameters</span>
+                    </h2>
+                    <span class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-mono font-medium">Model v2 Active</span>
                 </div>
 
-                <!-- Presets dropdown -->
+                <!-- Quick Presets -->
                 <div>
-                    <label class="text-xs text-gray-400 block mb-1.5 font-medium">Quick Vehicle Preset:</label>
-                    <select id="presetSelect" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
-                        <option value="custom">⚙️ Custom Parameters</option>
-                        <option value="nexon" selected>🚗 Tata Nexon EV (Car, Mall 30kW)</option>
-                        <option value="ola">🛵 Ola S1 Pro (2-Wheeler, Residential 3.3kW)</option>
-                        <option value="treo">🛺 Mahindra Treo (3-Wheeler E-Rickshaw, 15kW)</option>
-                        <option value="mg">⚡ MG ZS EV (Car, Highway 50kW Fast)</option>
+                    <label class="text-xs text-slate-600 block mb-1.5 font-medium">Select Vehicle & Scenario Preset:</label>
+                    <select id="presetSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition">
+                        <option value="bmw_i7" selected>BMW i7 Luxury EV (Mall, 30.0 kW)</option>
+                        <option value="tesla_roadster">Tesla Roadster (Highway, 50.0 kW)</option>
+                        <option value="custom_ev">High Poly Custom EV (Highway, 40.0 kW)</option>
+                        <option value="ola_scooter">Ola S1 Pro Scooter (Residential, 3.3 kW)</option>
+                        <option value="electric_scooter">Standard Electric 2-Wheeler (Residential, 3.3 kW)</option>
+                        <option value="custom">Custom Configuration</option>
                     </select>
                 </div>
 
-                <!-- Vehicle and Station selectors -->
+                <!-- Vehicle Class and Station -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Vehicle Class:</label>
-                        <select id="vehicleType" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                            <option value="car">🚗 Car</option>
-                            <option value="two_wheeler">🛵 2-Wheeler</option>
-                            <option value="three_wheeler">🛺 3-Wheeler</option>
+                        <label class="text-xs text-slate-600 block mb-1 font-medium">Vehicle Category:</label>
+                        <select id="vehicleType" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                            <option value="car" selected>Electric Car</option>
+                            <option value="two_wheeler">Electric 2-Wheeler</option>
+                            <option value="three_wheeler">Commercial 3-Wheeler</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Station Type:</label>
-                        <select id="stationType" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                            <option value="Mall">🏬 Mall</option>
-                            <option value="Highway">🛣️ Highway</option>
-                            <option value="Residential">🏡 Residential</option>
+                        <label class="text-xs text-slate-600 block mb-1 font-medium">Station Environment:</label>
+                        <select id="stationType" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600">
+                            <option value="Mall" selected>Shopping Mall</option>
+                            <option value="Highway">Highway Hub</option>
+                            <option value="Residential">Residential</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Sliders for Numerical Parameters -->
+                <!-- Custom Real 3D Model Loader (.GLB / .GLTF) -->
+                <div class="bg-slate-50 border border-dashed border-slate-300 hover:border-emerald-500 rounded-xl p-3 transition flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                <span>Load External 3D Asset</span>
+                                <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded font-mono">.GLB / .GLTF</span>
+                            </span>
+                            <span class="block text-[11px] text-slate-500">Drop or select your local 3D vehicle file</span>
+                        </div>
+                        <label for="glbFileInput" class="cursor-pointer bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                            <span>Browse File</span>
+                        </label>
+                        <input type="file" id="glbFileInput" accept=".glb,.gltf" class="hidden">
+                    </div>
+                    <div id="loadedModelBadge" class="hidden text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-lg border border-emerald-200 font-mono flex items-center justify-between">
+                        <span class="truncate">Loaded: <b id="loadedModelName">model.glb</b></span>
+                        <button id="btnRemoveCustomModel" class="text-xs text-rose-600 hover:text-rose-700 ml-2 font-bold cursor-pointer">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Parameters Sliders -->
                 <div class="space-y-3 pt-1">
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-gray-400">Battery Start SOC (%):</span>
-                            <span id="valSoc" class="font-mono text-emerald-400 font-bold">25%</span>
+                            <span class="text-slate-600 font-medium">Battery Start SOC (%):</span>
+                            <span id="valSoc" class="font-mono text-emerald-700 font-bold">25%</span>
                         </div>
-                        <input id="sliderSoc" type="range" min="5" max="80" value="25" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        <input id="sliderSoc" type="range" min="5" max="80" value="25" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-gray-400">Planned Duration:</span>
-                            <span id="valDuration" class="font-mono text-cyan-400 font-bold">60 min</span>
+                            <span class="text-slate-600 font-medium">Planned Duration:</span>
+                            <span id="valDuration" class="font-mono text-blue-700 font-bold">45 min</span>
                         </div>
-                        <input id="sliderDuration" type="range" min="1" max="240" value="60" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
-                        <div id="ruleDurationWarn" class="hidden text-[10px] text-rose-400 mt-1 flex items-center gap-1">
-                            ⚠️ <b>Client Rule:</b> Duration &lt; 5 mins rejected (HTTP 422)!
+                        <input id="sliderDuration" type="range" min="1" max="240" value="45" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div id="ruleDurationWarn" class="hidden text-xs bg-rose-50 border border-rose-200 text-rose-700 p-2 rounded-lg mt-1 font-medium">
+                            Validation Rule: Session duration must be at least 5 minutes (rejected with HTTP 422).
                         </div>
                     </div>
 
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-gray-400">Charger Rating (kW):</span>
-                            <span id="valCharger" class="font-mono text-indigo-400 font-bold">30.0 kW</span>
+                            <span class="text-slate-600 font-medium">Charger Power (kW):</span>
+                            <span id="valCharger" class="font-mono text-indigo-700 font-bold">30.0 kW</span>
                         </div>
-                        <input id="sliderCharger" type="range" min="3.0" max="60.0" step="0.5" value="30.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        <input id="sliderCharger" type="range" min="3.0" max="60.0" step="0.5" value="30.0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <div>
                         <div class="flex justify-between text-xs mb-1">
-                            <span class="text-gray-400">Air Temperature (°C):</span>
-                            <span id="valTemp" class="font-mono text-amber-400 font-bold">28.0 °C</span>
+                            <span class="text-slate-600 font-medium">Ambient Temperature (°C):</span>
+                            <span id="valTemp" class="font-mono text-amber-700 font-bold">28.0 °C</span>
                         </div>
-                        <input id="sliderTemp" type="range" min="5.0" max="85.0" step="0.5" value="28.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
-                        <div id="ruleTempWarn" class="hidden text-[10px] text-rose-400 mt-1 flex items-center gap-1">
-                            ⚠️ <b>Client Rule:</b> Temperature &gt; 75°C physically impossible (HTTP 422)!
+                        <input id="sliderTemp" type="range" min="10.0" max="85.0" step="0.5" value="28.0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div id="ruleTempWarn" class="hidden text-xs bg-rose-50 border border-rose-200 text-rose-700 p-2 rounded-lg mt-1 font-medium">
+                            Validation Rule: Ambient temperature above 75.0°C rejected as invalid sensor reading (HTTP 422).
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 pt-1">
                         <div>
                             <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-400">Vehicle Age:</span>
-                                <span id="valAge" class="font-mono text-gray-300">2.0 yr</span>
+                                <span class="text-slate-600 font-medium">Vehicle Age:</span>
+                                <span id="valAge" class="font-mono text-slate-800 font-bold">1.0 yr</span>
                             </div>
-                            <input id="sliderAge" type="range" min="0" max="8" step="0.5" value="2.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                            <input id="sliderAge" type="range" min="0.1" max="8.0" step="0.1" value="1.0" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                         </div>
-
                         <div>
                             <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-400">Queue Ahead:</span>
-                                <span id="valQueue" class="font-mono text-gray-300">1 EV</span>
+                                <span class="text-slate-600 font-medium">Queue Before:</span>
+                                <span id="valQueue" class="font-mono text-slate-800 font-bold">1 EV</span>
                             </div>
-                            <input id="sliderQueue" type="range" min="0" max="10" step="1" value="1" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                            <input id="sliderQueue" type="range" min="0" max="8" value="1" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                     </div>
                 </div>
 
-                <div class="border-t border-gray-800 pt-3">
-                    <button id="btnRecalc" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold py-2.5 rounded-xl border border-gray-700 transition flex items-center justify-center gap-2">
-                        <span>🔄 Recalculate Prediction</span>
+                <div class="pt-2 flex items-center gap-3">
+                    <button id="btnRecalc" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-lg shadow-sm transition">
+                        Recalculate Energy Forecast
                     </button>
                 </div>
             </div>
@@ -235,323 +339,828 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-900 bg-gray-950/60 px-6 py-3 text-center text-xs text-gray-500">
-        Group G171 &nbsp;|&nbsp; Sparsh Bansal (S24CSEU0560) &bull; Siddharth Rawat (S24CSEU0542) &bull; Tanisha Rathore (S24CSEU0591) &nbsp;|&nbsp; Faculty: Dr. Richa Sharma
+    <footer class="border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-500">
+        SCSE3040 MLOps Group G171 | Dehradun Green Charge Network | Group Members: S24CSEU0560 (Sparsh Bansal), S24CSEU0542 (Siddharth Rawat), S24CSEU0591 (Tanisha Rathore)
     </footer>
 
-    <!-- Interactive 3D Canvas Rendering & Physics Engine Script -->
     <script>
-        // Web Audio Synthesizer for Interactive Sound FX
+        // ---------------------------------------------------------
+        // Sound FX Engine
+        // ---------------------------------------------------------
         class SoundFX {
             constructor() {
                 this.ctx = null;
                 this.enabled = true;
+                // High-fidelity cable insertion sound
+                this.plugAudio = new Audio('/static/cable_plug.mp3');
+                this.plugAudio.preload = 'auto';
             }
             init() {
                 if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
                 }
             }
-            playBeep(freq = 600, duration = 0.1) {
+            playBeep(freq = 440, duration = 0.08) {
                 if (!this.enabled) return;
                 try {
                     this.init();
+                    if (!this.ctx) return;
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                     gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + duration);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + duration);
                 } catch(e) {}
+            }
+            playSuccess() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    [523.25, 659.25, 783.99].forEach((f, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.frequency.setValueAtTime(f, this.ctx.currentTime + i * 0.08);
+                        gain.gain.setValueAtTime(0.06, this.ctx.currentTime + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.08 + 0.12);
+                        osc.connect(gain); gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + i * 0.08);
+                        osc.stop(this.ctx.currentTime + i * 0.08 + 0.12);
+                    });
+                } catch(e) {}
+            }
+            playPlugSound() {
+                if (!this.enabled) return;
+                try {
+                    if (this.plugAudio) {
+                        this.plugAudio.currentTime = 0;
+                        const p = this.plugAudio.play();
+                        if (p && p.catch) {
+                            p.catch(() => {
+                                this.playElectricHum();
+                            });
+                        }
+                    } else {
+                        this.playElectricHum();
+                    }
+                } catch(e) {
+                    this.playElectricHum();
+                }
             }
             playElectricHum() {
                 if (!this.enabled) return;
                 try {
                     this.init();
+                    if (!this.ctx) return;
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(90, this.ctx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 1.2);
-                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.5);
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 1.5);
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.2);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + 1.2);
                 } catch(e) {}
             }
         }
         const sfx = new SoundFX();
 
-        // 3D Canvas Projection Setup
-        const canvas = document.getElementById('evCanvas');
-        const ctx = canvas.getContext('2d');
-        let autoRotate = true;
-        let isCharging = false;
-        let angle = 0.55;
-        let chargeProgress = 0;
-        let particles = [];
+        // ---------------------------------------------------------
+        // Three.js Studio Scene Setup (Light Theme)
+        // ---------------------------------------------------------
+        const container = document.getElementById('canvasContainer');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xF1F5F9);
+        scene.fog = new THREE.FogExp2(0xF1F5F9, 0.025);
 
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
-            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(7, 4.5, 8.5);
 
-        // Mouse drag rotation controls
-        let isDragging = false;
-        let lastMouseX = 0;
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            lastMouseX = e.clientX;
-            autoRotate = false;
-            document.getElementById('btnOrbit').innerHTML = '🔄 <span>Auto-Rotate: OFF</span>';
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.domElement.style.position = 'absolute';
+        renderer.domElement.style.inset = '0';
+        renderer.domElement.style.width = '100%';
+        renderer.domElement.style.height = '100%';
+        renderer.domElement.style.zIndex = '0';
+        renderer.domElement.style.display = 'none'; // Initially Sketchfab 3D is active
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 2.0; // Auto-rotate Three.js scene
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+        controls.minDistance = 4;
+        controls.maxDistance = 18;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.85);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xFFFFFF, 1.3);
+        dirLight.position.set(8, 14, 6);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0xE0F2FE, 0.5);
+        fillLight.position.set(-8, 6, -6);
+        scene.add(fillLight);
+
+        // Ground Floor Bay
+        const floorGeo = new THREE.PlaneGeometry(30, 30);
+        const floorMat = new THREE.MeshStandardMaterial({
+            color: 0xE2E8F0,
+            roughness: 0.75,
+            metalness: 0.15
         });
-        window.addEventListener('mouseup', () => isDragging = false);
-        window.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const delta = e.clientX - lastMouseX;
-                angle += delta * 0.008;
-                lastMouseX = e.clientX;
-            }
-        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
 
-        // 3D Isometric / Orthographic Point Projection helper
-        function project3D(x, y, z, rot) {
-            const cos = Math.cos(rot);
-            const sin = Math.sin(rot);
-            // Rotate around Y-axis
-            const rx = x * cos - z * sin;
-            const rz = x * sin + z * cos;
-            // Isometric projection formula
-            const cx = canvas.width / (2 * window.devicePixelRatio);
-            const cy = canvas.height / (2 * window.devicePixelRatio) + 30;
-            const px = cx + (rx - rz) * 1.5;
-            const py = cy + (rx + rz) * 0.75 - y * 1.6;
-            return { x: px, y: py, depth: rz };
+        // Studio Floor Grid Helper
+        const grid = new THREE.GridHelper(24, 24, 0x059669, 0xCBD5E1);
+        grid.position.y = 0.01;
+        scene.add(grid);
+
+        // Parking Bay Marking Lines
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0x059669 });
+        const bayLine1 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 5.5), lineMat);
+        bayLine1.position.set(-2.2, 0.02, 0.2);
+        scene.add(bayLine1);
+        const bayLine2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 5.5), lineMat);
+        bayLine2.position.set(2.2, 0.02, 0.2);
+        scene.add(bayLine2);
+
+        // Charging Kiosk Model
+        const kioskGroup = new THREE.Group();
+        const pedGeo = new THREE.CylinderGeometry(0.55, 0.65, 0.15, 16);
+        const pedMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.4, roughness: 0.5 });
+        const ped = new THREE.Mesh(pedGeo, pedMat);
+        ped.position.y = 0.075;
+        ped.receiveShadow = true;
+        kioskGroup.add(ped);
+
+        const kioskGeo = new THREE.BoxGeometry(0.65, 2.2, 0.45);
+        const kioskMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.7, roughness: 0.3 });
+        const kioskBody = new THREE.Mesh(kioskGeo, kioskMat);
+        kioskBody.position.y = 1.18;
+        kioskBody.castShadow = true;
+        kioskGroup.add(kioskBody);
+
+        const stripeGeo = new THREE.BoxGeometry(0.67, 0.08, 0.47);
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0x059669 });
+        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe.position.y = 2.05;
+        kioskGroup.add(stripe);
+
+        const screenGeo = new THREE.PlaneGeometry(0.45, 0.6);
+        const screenMat = new THREE.MeshBasicMaterial({ color: 0x064E3B });
+        const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.set(0, 1.45, 0.23);
+        kioskGroup.add(screen);
+
+        kioskGroup.position.set(3.2, 0, -1.2);
+        kioskGroup.rotation.y = -Math.PI / 6;
+        scene.add(kioskGroup);
+
+        // ---------------------------------------------------------
+        // Procedural 3D Vehicles (Car & Scooter)
+        // ---------------------------------------------------------
+        let currentVehicleGroup = new THREE.Group();
+        scene.add(currentVehicleGroup);
+
+        function createWheel() {
+            const wheelGroup = new THREE.Group();
+            const tireGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 24);
+            const tireMat = new THREE.MeshStandardMaterial({ color: 0x18181B, roughness: 0.9, metalness: 0.1 });
+            const tire = new THREE.Mesh(tireGeo, tireMat);
+            tire.rotation.z = Math.PI / 2;
+            tire.castShadow = true;
+            wheelGroup.add(tire);
+
+            const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.29, 20);
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0xD4D4D8, metalness: 0.9, roughness: 0.15 });
+            const rim = new THREE.Mesh(rimGeo, rimMat);
+            rim.rotation.z = Math.PI / 2;
+            wheelGroup.add(rim);
+
+            const spokeMat = new THREE.MeshStandardMaterial({ color: 0x27272A, metalness: 0.8, roughness: 0.3 });
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * Math.PI * 2) / 5;
+                const spokeGeo = new THREE.BoxGeometry(0.04, 0.22, 0.05);
+                const spoke = new THREE.Mesh(spokeGeo, spokeMat);
+                spoke.position.set(0.146, Math.cos(angle) * 0.11, Math.sin(angle) * 0.11);
+                wheelGroup.add(spoke);
+            }
+
+            const calGeo = new THREE.BoxGeometry(0.06, 0.12, 0.14);
+            const calMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.3, metalness: 0.6 });
+            const caliper = new THREE.Mesh(calGeo, calMat);
+            caliper.position.set(0.08, 0.12, 0);
+            wheelGroup.add(caliper);
+
+            return wheelGroup;
         }
 
-        // Draw 3D Box in Canvas
-        function draw3DBox(x, y, z, w, h, d, colorTop, colorLeft, colorRight, rot) {
-            const p0 = project3D(x, y, z, rot);
-            const p1 = project3D(x + w, y, z, rot);
-            const p2 = project3D(x + w, y, z + d, rot);
-            const p3 = project3D(x, y, z + d, rot);
+        function build3DCar(color = 0x2563EB) {
+            const car = new THREE.Group();
+            const carPaint = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.8,
+                roughness: 0.2,
+            });
+            const glassMat = new THREE.MeshStandardMaterial({
+                color: 0x0F172A,
+                metalness: 0.95,
+                roughness: 0.05,
+                transparent: true,
+                opacity: 0.85
+            });
+            const darkTrim = new THREE.MeshStandardMaterial({
+                color: 0x09090B,
+                metalness: 0.4,
+                roughness: 0.6
+            });
 
-            const p4 = project3D(x, y + h, z, rot);
-            const p5 = project3D(x + w, y + h, z, rot);
-            const p6 = project3D(x + w, y + h, z + d, rot);
-            const p7 = project3D(x, y + h, z + d, rot);
+            // 1. Lower Body Chassis
+            const lowerGeo = new THREE.BoxGeometry(2.1, 0.58, 4.3);
+            const lower = new THREE.Mesh(lowerGeo, carPaint);
+            lower.position.y = 0.55;
+            lower.castShadow = true;
+            lower.receiveShadow = true;
+            car.add(lower);
 
-            // Top Face
-            ctx.fillStyle = colorTop;
-            ctx.beginPath();
-            ctx.moveTo(p4.x, p4.y);
-            ctx.lineTo(p5.x, p5.y);
-            ctx.lineTo(p6.x, p6.y);
-            ctx.lineTo(p7.x, p7.y);
-            ctx.closePath();
-            ctx.fill();
+            // 2. Front Splitter & Grille
+            const splitterGeo = new THREE.BoxGeometry(2.05, 0.12, 0.4);
+            const splitter = new THREE.Mesh(splitterGeo, darkTrim);
+            splitter.position.set(0, 0.32, 2.12);
+            car.add(splitter);
 
-            // Right Face
-            ctx.fillStyle = colorRight;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p5.x, p5.y);
-            ctx.lineTo(p6.x, p6.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.closePath();
-            ctx.fill();
+            const grilleGeo = new THREE.BoxGeometry(1.6, 0.18, 0.05);
+            const grille = new THREE.Mesh(grilleGeo, darkTrim);
+            grille.position.set(0, 0.52, 2.16);
+            car.add(grille);
 
-            // Left Face
-            ctx.fillStyle = colorLeft;
-            ctx.beginPath();
-            ctx.moveTo(p0.x, p0.y);
-            ctx.lineTo(p4.x, p4.y);
-            ctx.lineTo(p7.x, p7.y);
-            ctx.lineTo(p3.x, p3.y);
-            ctx.closePath();
-            ctx.fill();
+            // 3. Cabin & Glass
+            const cabinGeo = new THREE.BoxGeometry(1.82, 0.58, 2.4);
+            const cabin = new THREE.Mesh(cabinGeo, glassMat);
+            cabin.position.set(0, 1.05, -0.2);
+            cabin.castShadow = true;
+            car.add(cabin);
+
+            const roofGeo = new THREE.BoxGeometry(1.78, 0.05, 2.3);
+            const roof = new THREE.Mesh(roofGeo, carPaint);
+            roof.position.set(0, 1.34, -0.2);
+            car.add(roof);
+
+            // 4. Sloped Hood
+            const hoodGeo = new THREE.BoxGeometry(1.92, 0.18, 1.2);
+            const hood = new THREE.Mesh(hoodGeo, carPaint);
+            hood.position.set(0, 0.78, 1.45);
+            hood.rotation.x = -0.09;
+            car.add(hood);
+
+            // 5. Trunk & Spoiler
+            const trunkGeo = new THREE.BoxGeometry(1.9, 0.22, 0.8);
+            const trunk = new THREE.Mesh(trunkGeo, carPaint);
+            trunk.position.set(0, 0.76, -1.65);
+            car.add(trunk);
+
+            const spoilerGeo = new THREE.BoxGeometry(1.85, 0.05, 0.22);
+            const spoiler = new THREE.Mesh(spoilerGeo, darkTrim);
+            spoiler.position.set(0, 0.95, -2.05);
+            spoiler.rotation.x = 0.1;
+            car.add(spoiler);
+
+            // 6. Side Mirrors
+            const mirrorGeo = new THREE.BoxGeometry(0.24, 0.12, 0.14);
+            const mirrorGlassGeo = new THREE.PlaneGeometry(0.2, 0.1);
+            const mirrorGlassMat = new THREE.MeshStandardMaterial({ color: 0xE4E4E7, metalness: 0.95, roughness: 0.1 });
+
+            const mirrorR = new THREE.Mesh(mirrorGeo, carPaint);
+            mirrorR.position.set(1.12, 0.98, 0.75);
+            const mGlassR = new THREE.Mesh(mirrorGlassGeo, mirrorGlassMat);
+            mGlassR.position.set(1.13, 0.98, 0.75);
+            mGlassR.rotation.y = Math.PI / 2;
+            car.add(mirrorR);
+            car.add(mGlassR);
+
+            const mirrorL = new THREE.Mesh(mirrorGeo, carPaint);
+            mirrorL.position.set(-1.12, 0.98, 0.75);
+            const mGlassL = new THREE.Mesh(mirrorGlassGeo, mirrorGlassMat);
+            mGlassL.position.set(-1.13, 0.98, 0.75);
+            mGlassL.rotation.y = -Math.PI / 2;
+            car.add(mirrorL);
+            car.add(mGlassL);
+
+            // 7. Headlights & Taillights
+            const headGeo = new THREE.BoxGeometry(0.38, 0.12, 0.08);
+            const headMat = new THREE.MeshBasicMaterial({ color: 0xF0FDF4 });
+            const headL = new THREE.Mesh(headGeo, headMat);
+            headL.position.set(0.72, 0.65, 2.16);
+            car.add(headL);
+            const headR = new THREE.Mesh(headGeo, headMat);
+            headR.position.set(-0.72, 0.65, 2.16);
+            car.add(headR);
+
+            const tailGeo = new THREE.BoxGeometry(1.85, 0.08, 0.06);
+            const tailMat = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+            const tailBar = new THREE.Mesh(tailGeo, tailMat);
+            tailBar.position.set(0, 0.76, -2.16);
+            car.add(tailBar);
+
+            // 8. Port Ring
+            const portRingGeo = new THREE.RingGeometry(0.08, 0.13, 16);
+            const portRingMat = new THREE.MeshBasicMaterial({ color: 0x059669, side: THREE.DoubleSide });
+            const portRing = new THREE.Mesh(portRingGeo, portRingMat);
+            portRing.position.set(1.06, 0.65, 0.8);
+            portRing.rotation.y = Math.PI / 2;
+            car.add(portRing);
+
+            // 9. Wheels
+            const wFL = createWheel(); wFL.position.set(1.08, 0.38, 1.3); car.add(wFL);
+            const wFR = createWheel(); wFR.position.set(-1.08, 0.38, 1.3); wFR.rotation.y = Math.PI; car.add(wFR);
+            const wRL = createWheel(); wRL.position.set(1.08, 0.38, -1.3); car.add(wRL);
+            const wRR = createWheel(); wRR.position.set(-1.08, 0.38, -1.3); wRR.rotation.y = Math.PI; car.add(wRR);
+
+            car.position.set(0, 0, 0);
+            return { mesh: car, portLocation: new THREE.Vector3(1.08, 0.65, 0.8) };
         }
 
-        // Particle stream simulation for electric flow
-        class EnergyParticle {
-            constructor(startX, startY, endX, endY) {
-                this.x = startX;
-                this.y = startY;
-                this.startX = startX;
-                this.startY = startY;
-                this.endX = endX;
-                this.endY = endY;
-                this.t = Math.random();
-                this.speed = 0.015 + Math.random() * 0.02;
-                this.radius = 2 + Math.random() * 2.5;
-            }
-            update() {
-                this.t += this.speed;
-                if (this.t > 1) this.t = 0;
-                // Bezier curve midpoint with droop
-                const midX = (this.startX + this.endX) / 2;
-                const midY = (this.startY + this.endY) / 2 + 35;
-                const inv = 1 - this.t;
-                this.x = inv * inv * this.startX + 2 * inv * this.t * midX + this.t * this.t * this.endX;
-                this.y = inv * inv * this.startY + 2 * inv * this.t * midY + this.t * this.t * this.endY;
-            }
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = isCharging ? '#10B981' : '#06B6D4';
-                ctx.shadowColor = '#10B981';
-                ctx.shadowBlur = 8;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
+        function build3DScooter() {
+            const scooter = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x059669, metalness: 0.8, roughness: 0.2 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x18181B, metalness: 0.3, roughness: 0.7 });
+
+            const floorGeo = new THREE.BoxGeometry(0.7, 0.22, 1.8);
+            const floorMesh = new THREE.Mesh(floorGeo, bodyMat);
+            floorMesh.position.y = 0.32;
+            floorMesh.castShadow = true;
+            scooter.add(floorMesh);
+
+            const forkGeo = new THREE.CylinderGeometry(0.07, 0.07, 1.3, 12);
+            const fork = new THREE.Mesh(forkGeo, darkMat);
+            fork.position.set(0, 0.88, 0.7);
+            fork.rotation.x = -0.2;
+            scooter.add(fork);
+
+            const handleGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.85, 12);
+            const handle = new THREE.Mesh(handleGeo, darkMat);
+            handle.position.set(0, 1.45, 0.58);
+            handle.rotation.z = Math.PI / 2;
+            scooter.add(handle);
+
+            const headGeo = new THREE.TorusGeometry(0.1, 0.03, 8, 24);
+            const headMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.set(0, 1.32, 0.74);
+            scooter.add(head);
+
+            const seatGeo = new THREE.BoxGeometry(0.5, 0.16, 0.9);
+            const seat = new THREE.Mesh(seatGeo, darkMat);
+            seat.position.set(0, 0.52, -0.3);
+            scooter.add(seat);
+
+            const wFront = createWheel(); wFront.scale.set(0.75, 0.75, 0.75); wFront.position.set(0, 0.28, 0.8); scooter.add(wFront);
+            const wRear = createWheel(); wRear.scale.set(0.75, 0.75, 0.75); wRear.position.set(0, 0.28, -0.75); scooter.add(wRear);
+
+            return { mesh: scooter, portLocation: new THREE.Vector3(0.36, 0.42, 0.2) };
         }
 
-        // Main Animation Loop
-        function animate() {
-            const w = canvas.width / window.devicePixelRatio;
-            const h = canvas.height / window.devicePixelRatio;
-            ctx.clearRect(0, 0, w, h);
+        // Active 3D Vehicle Switcher
+        let activePortLocation = new THREE.Vector3(1.08, 0.65, 0.8);
+        let isCustomModelLoaded = false;
 
-            if (autoRotate) {
-                angle += 0.005;
+        function switchVehicleModel(vClass) {
+            if (isCustomModelLoaded) {
+                isCustomModelLoaded = false;
+                const badge = document.getElementById('loadedModelBadge');
+                if (badge) badge.classList.add('hidden');
+                const fileInp = document.getElementById('glbFileInput');
+                if (fileInp) fileInp.value = '';
             }
-
-            // Draw Ground Station Grid Pad
-            const gridCenter = project3D(0, -5, 0, angle);
-            ctx.save();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.lineWidth = 1;
-            for (let i = -140; i <= 140; i += 28) {
-                const g1 = project3D(i, -5, -140, angle);
-                const g2 = project3D(i, -5, 140, angle);
-                ctx.beginPath();
-                ctx.moveTo(g1.x, g1.y);
-                ctx.lineTo(g2.x, g2.y);
-                ctx.stroke();
-
-                const g3 = project3D(-140, -5, i, angle);
-                const g4 = project3D(140, -5, i, angle);
-                ctx.beginPath();
-                ctx.moveTo(g3.x, g3.y);
-                ctx.lineTo(g4.x, g4.y);
-                ctx.stroke();
-            }
-            ctx.restore();
-
-            // 1. Draw 3D EV Supercharger Kiosk
-            // Base pedestal
-            draw3DBox(80, -2, -30, 32, 8, 32, '#1F2937', '#111827', '#374151', angle);
-            // Main kiosk pillar
-            draw3DBox(84, 6, -26, 24, 75, 24, '#10B981', '#065F46', '#047857', angle);
-            // Screen display
-            draw3DBox(88, 50, -28, 16, 20, 2, '#34D399', '#059669', '#10B981', angle);
-
-            // 2. Draw 3D Vehicle based on Selected Class
-            const vClass = document.getElementById('vehicleType').value;
-            if (vClass === 'car') {
-                // Lower Car Body Chassis
-                draw3DBox(-70, 4, -40, 110, 22, 65, '#2563EB', '#1E40AF', '#1D4ED8', angle);
-                // Cabin & Windshield
-                draw3DBox(-45, 26, -30, 65, 20, 45, '#60A5FA', '#3B82F6', '#2563EB', angle);
-                // Wheels
-                draw3DBox(-60, -3, -42, 16, 12, 6, '#111827', '#030712', '#374151', angle);
-                draw3DBox(15, -3, -42, 16, 12, 6, '#111827', '#030712', '#374151', angle);
-                draw3DBox(-60, -3, 22, 16, 12, 6, '#111827', '#030712', '#374151', angle);
-                draw3DBox(15, -3, 22, 16, 12, 6, '#111827', '#030712', '#374151', angle);
-            } else if (vClass === 'two_wheeler') {
-                // Scooter Body Frame
-                draw3DBox(-30, 6, -10, 60, 24, 18, '#F59E0B', '#B45309', '#D97706', angle);
-                draw3DBox(20, 18, -8, 8, 32, 14, '#D97706', '#92400E', '#B45309', angle);
-                draw3DBox(-25, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
-                draw3DBox(16, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
+            scene.remove(currentVehicleGroup);
+            let built;
+            if (vClass === 'two_wheeler') {
+                built = build3DScooter();
             } else {
-                // Three-Wheeler E-Rickshaw
-                draw3DBox(-50, 4, -30, 85, 26, 50, '#10B981', '#047857', '#059669', angle);
-                draw3DBox(-45, 30, -28, 75, 28, 46, '#E5E7EB', '#9CA3AF', '#D1D5DB', angle);
-                draw3DBox(25, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
-                draw3DBox(-40, -2, -32, 14, 12, 8, '#111827', '#030712', '#374151', angle);
-                draw3DBox(-40, -2, 18, 14, 12, 8, '#111827', '#030712', '#374151', angle);
+                built = build3DCar();
             }
+            currentVehicleGroup = built.mesh;
+            activePortLocation = built.portLocation;
+            scene.add(currentVehicleGroup);
+            updateChargingCable();
+        }
 
-            // 3. Draw Charging Cable from Kiosk to Car Port
-            const portPos = project3D(vClass === 'car' ? 25 : 10, 15, -5, angle);
-            const kioskCablePos = project3D(85, 45, -15, angle);
+        // ---------------------------------------------------------
+        // Real 3D Model (.GLB / .GLTF) File Loader
+        // ---------------------------------------------------------
+        const glbFileInput = document.getElementById('glbFileInput');
+        const loadedModelBadge = document.getElementById('loadedModelBadge');
+        const loadedModelName = document.getElementById('loadedModelName');
+        const btnRemoveCustomModel = document.getElementById('btnRemoveCustomModel');
 
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(kioskCablePos.x, kioskCablePos.y);
-            const ctrlX = (kioskCablePos.x + portPos.x) / 2;
-            const ctrlY = (kioskCablePos.y + portPos.y) / 2 + 40;
-            ctx.quadraticCurveTo(ctrlX, ctrlY, portPos.x, portPos.y);
-            ctx.lineWidth = isCharging ? 4 : 2.5;
-            ctx.strokeStyle = isCharging ? '#10B981' : '#4B5563';
-            if (isCharging) {
-                ctx.shadowColor = '#10B981';
-                ctx.shadowBlur = 12;
+        function loadGLBArrayBuffer(buffer, filename = 'custom_car.glb') {
+            if (typeof THREE.GLTFLoader === 'undefined') {
+                alert('GLTFLoader is loading, please try again in a few moments.');
+                return;
             }
-            ctx.stroke();
-            ctx.restore();
+            setEngineMode('threejs');
+            const loader = new THREE.GLTFLoader();
+            loader.parse(buffer, '', function(gltf) {
+                scene.remove(currentVehicleGroup);
+                const model = gltf.scene;
 
-            // 4. Update & Render Energy Particles
-            if (isCharging) {
-                if (particles.length < 15) {
-                    particles.push(new EnergyParticle(kioskCablePos.x, kioskCablePos.y, portPos.x, portPos.y));
-                }
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
+                const bbox = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                bbox.getSize(size);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const targetScale = 4.3 / (maxDim || 1.0);
+                model.scale.set(targetScale, targetScale, targetScale);
+
+                const updatedBox = new THREE.Box3().setFromObject(model);
+                model.position.y = -updatedBox.min.y;
+                model.position.x = 0;
+                model.position.z = 0;
+
+                model.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
                 });
-            } else {
-                particles = [];
-            }
 
-            requestAnimationFrame(animate);
+                currentVehicleGroup = model;
+                scene.add(currentVehicleGroup);
+
+                const halfX = (updatedBox.max.x - updatedBox.min.x) / 2;
+                const halfY = (updatedBox.max.y - updatedBox.min.y) / 2;
+                activePortLocation = new THREE.Vector3(Math.max(0.8, halfX * 0.95), Math.max(0.4, halfY * 0.6), 0.6);
+                updateChargingCable();
+
+                isCustomModelLoaded = true;
+                if (loadedModelName) loadedModelName.innerText = filename;
+                if (loadedModelBadge) loadedModelBadge.classList.remove('hidden');
+                if (sfx) sfx.playSuccess();
+            }, function(error) {
+                console.error('Error parsing GLTF:', error);
+                alert('Could not parse 3D GLB model. Please make sure the file is a valid .glb asset.');
+            });
         }
-        requestAnimationFrame(animate);
 
-        // Sound Toggle
-        document.getElementById('btnSound').addEventListener('click', () => {
-            sfx.enabled = !sfx.enabled;
-            document.getElementById('btnSound').innerHTML = sfx.enabled ? '🔊 <span>Sound: ON</span>' : '🔇 <span>Sound: OFF</span>';
+        if (glbFileInput) {
+            glbFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    loadGLBArrayBuffer(evt.target.result, file.name);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        if (btnRemoveCustomModel) {
+            btnRemoveCustomModel.addEventListener('click', function(e) {
+                e.stopPropagation();
+                isCustomModelLoaded = false;
+                if (loadedModelBadge) loadedModelBadge.classList.add('hidden');
+                if (glbFileInput) glbFileInput.value = '';
+                switchVehicleModel(document.getElementById('vehicleType').value);
+                if (sfx) sfx.playBeep(440, 0.08);
+            });
+        }
+
+        container.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            container.style.borderColor = '#059669';
         });
 
-        // Orbit Toggle
+        container.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            container.style.borderColor = '';
+        });
+
+        container.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            container.style.borderColor = '';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        loadGLBArrayBuffer(evt.target.result, file.name);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    alert('Please drop a .glb or .gltf 3D model file.');
+                }
+            }
+        });
+
+        // ---------------------------------------------------------
+        // 3D Charging Cable & Flowing Energy Particles
+        // ---------------------------------------------------------
+        let cableMesh = null;
+        let cableParticles = [];
+        let isCharging = false;
+
+        function updateChargingCable() {
+            if (cableMesh) scene.remove(cableMesh);
+            cableParticles.forEach(p => scene.remove(p.mesh));
+            cableParticles = [];
+
+            const kioskPort = new THREE.Vector3(3.0, 1.25, -1.05);
+            const carPort = activePortLocation.clone();
+
+            const midPoint = new THREE.Vector3(
+                (kioskPort.x + carPort.x) / 2,
+                0.22,
+                (kioskPort.z + carPort.z) / 2
+            );
+
+            const curve = new THREE.QuadraticBezierCurve3(kioskPort, midPoint, carPort);
+            const tubeGeo = new THREE.TubeGeometry(curve, 32, isCharging ? 0.045 : 0.03, 8, false);
+            const tubeMat = new THREE.MeshStandardMaterial({
+                color: isCharging ? 0x059669 : 0x64748B,
+                emissive: isCharging ? 0x047857 : 0x000000,
+                roughness: 0.3,
+                metalness: 0.5
+            });
+            cableMesh = new THREE.Mesh(tubeGeo, tubeMat);
+            scene.add(cableMesh);
+
+            if (isCharging) {
+                const partGeo = new THREE.SphereGeometry(0.06, 12, 12);
+                const partMat = new THREE.MeshBasicMaterial({ color: 0x10B981 });
+                for (let i = 0; i < 8; i++) {
+                    const pMesh = new THREE.Mesh(partGeo, partMat);
+                    scene.add(pMesh);
+                    cableParticles.push({
+                        mesh: pMesh,
+                        curve: curve,
+                        t: i / 8
+                    });
+                }
+            }
+        }
+
+        // Render & Animation Loop
+        let autoRotate = true;
+        const clock = new THREE.Clock();
+
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
+            const delta = clock.getDelta();
+
+            if (autoRotate && controls.state === -1) {
+                currentVehicleGroup.rotation.y += 0.003;
+            }
+
+            if (isCharging && cableParticles.length > 0) {
+                cableParticles.forEach(p => {
+                    p.t += delta * 0.75;
+                    if (p.t > 1) p.t = 0;
+                    const pos = p.curve.getPoint(p.t);
+                    p.mesh.position.copy(pos);
+                });
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // ---------------------------------------------------------
+        // Photorealistic Sketchfab 3D Models with Auto-Rotate
+        // ---------------------------------------------------------
+        const SKETCHFAB_MODELS = {
+            bmw_i7: {
+                id: "d1f59f287da14c93a43bebf231d4124d",
+                title: "3D Model BMW i7",
+                author: "zizian",
+                authorUrl: "https://sketchfab.com/zizian",
+                modelUrl: "https://sketchfab.com/3d-models/3d-model-bmw-i7-d1f59f287da14c93a43bebf231d4124d",
+                vType: "car",
+                stType: "Mall",
+                soc: 25, mins: 45, kw: 30.0, temp: 28.0, age: 1.0, queue: 1
+            },
+            tesla_roadster: {
+                id: "924c408b10634a56926c9f14ac090d9e",
+                title: "Tesla Roadster",
+                author: "zizian",
+                authorUrl: "https://sketchfab.com/zizian",
+                modelUrl: "https://sketchfab.com/3d-models/3d-model-tesla-roads-924c408b10634a56926c9f14ac090d9e",
+                vType: "car",
+                stType: "Highway",
+                soc: 15, mins: 35, kw: 50.0, temp: 32.0, age: 0.8, queue: 2
+            },
+            custom_ev: {
+                id: "ef2d3b2c363d4d90b951ebe75e8effbc",
+                title: "High Poly Custom EV (Game Ready)",
+                author: "ProGraphix",
+                authorUrl: "https://sketchfab.com/ProGraphix",
+                modelUrl: "https://sketchfab.com/3d-models/unbranded-high-poly-electric-car-game-ready-ef2d3b2c363d4d90b951ebe75e8effbc",
+                vType: "car",
+                stType: "Highway",
+                soc: 20, mins: 50, kw: 40.0, temp: 30.0, age: 1.2, queue: 1
+            },
+            ola_scooter: {
+                id: "54a28e841f494f7496468f06aa36fbcb",
+                title: "Ola S1 Electric Scooter (White)",
+                author: "neshallads",
+                authorUrl: "https://sketchfab.com/neshallads",
+                modelUrl: "https://sketchfab.com/3d-models/ola-electric-scooter-white-color-54a28e841f494f7496468f06aa36fbcb",
+                vType: "two_wheeler",
+                stType: "Residential",
+                soc: 30, mins: 80, kw: 3.3, temp: 25.0, age: 1.0, queue: 0
+            },
+            electric_scooter: {
+                id: "8a5db99066d84208854fadd83e49bbc6",
+                title: "Electric Scooter (Standard 2-Wheeler)",
+                author: "Andrea Costi",
+                authorUrl: "https://sketchfab.com/andreacosti",
+                modelUrl: "https://sketchfab.com/3d-models/electric-scooter-8a5db99066d84208854fadd83e49bbc6",
+                vType: "two_wheeler",
+                stType: "Residential",
+                soc: 20, mins: 75, kw: 3.3, temp: 26.0, age: 1.5, queue: 0
+            }
+        };
+
+        let currentModelKey = 'bmw_i7';
+        let currentEngineMode = 'sketchfab';
+
+        // Auto-spin enabled on every Sketchfab model (autospin=0.35)
+        function setSketchfabModel(key) {
+            const item = SKETCHFAB_MODELS[key];
+            if (!item) return;
+            currentModelKey = key;
+            setEngineMode('sketchfab');
+
+            const iframe = document.getElementById('sketchfabIframe');
+            iframe.src = `https://sketchfab.com/models/${item.id}/embed?autostart=1&autospin=0.35&internal=1&ui_infos=0&ui_watermark=0&ui_hint=0`;
+
+            const hudModelTitle = document.getElementById('hudModelTitle');
+            if (hudModelTitle) {
+                hudModelTitle.innerText = item.title;
+            }
+
+            const attrModelLink = document.getElementById('attrModelLink');
+            const attrAuthor = document.getElementById('attrAuthor');
+            if (attrModelLink && attrAuthor) {
+                attrModelLink.innerText = item.title;
+                attrModelLink.href = item.modelUrl;
+                attrAuthor.innerText = item.author;
+                attrAuthor.href = item.authorUrl;
+            }
+        }
+
+        function setEngineMode(mode) {
+            currentEngineMode = mode;
+            const iframe = document.getElementById('sketchfabIframe');
+            const threeCanvas = renderer.domElement;
+            const btn = document.getElementById('btnEngineMode');
+            const btnResetCam = document.getElementById('btnResetCam');
+            const btnOrbit = document.getElementById('btnOrbit');
+            const attr = document.getElementById('sketchfabAttribution');
+
+            if (mode === 'sketchfab') {
+                iframe.classList.remove('hidden');
+                threeCanvas.style.display = 'none';
+                btn.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg><span>Sketchfab 3D</span>`;
+                btnResetCam.classList.add('hidden');
+                btnOrbit.classList.add('hidden');
+                if (attr) attr.classList.remove('hidden');
+            } else {
+                iframe.classList.add('hidden');
+                threeCanvas.style.display = 'block';
+                btn.innerHTML = `<svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg><span>Three.js Studio</span>`;
+                btnResetCam.classList.remove('hidden');
+                btnOrbit.classList.remove('hidden');
+                if (attr) attr.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('btnEngineMode').addEventListener('click', () => {
+            if (currentEngineMode === 'sketchfab') {
+                setEngineMode('threejs');
+                switchVehicleModel(document.getElementById('vehicleType').value);
+            } else {
+                setEngineMode('sketchfab');
+                if (SKETCHFAB_MODELS[currentModelKey]) {
+                    setSketchfabModel(currentModelKey);
+                } else {
+                    setSketchfabModel('bmw_i7');
+                }
+            }
+            sfx.playBeep(600, 0.05);
+        });
+
+        // Initialize Scene & Viewers
+        switchVehicleModel('car');
+        renderLoop();
+        setSketchfabModel('bmw_i7');
+
+        // ---------------------------------------------------------
+        // UI & Camera Controls
+        // ---------------------------------------------------------
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
         document.getElementById('btnOrbit').addEventListener('click', () => {
             autoRotate = !autoRotate;
-            document.getElementById('btnOrbit').innerHTML = autoRotate ? '🔄 <span>Auto-Rotate: ON</span>' : '🔄 <span>Auto-Rotate: OFF</span>';
+            controls.autoRotate = autoRotate;
+            document.getElementById('btnOrbit').innerHTML = `<svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Rotate: ${autoRotate ? 'ON' : 'OFF'}</span>`;
         });
 
-        // Synchronize UI Readouts & Client Rules Validation
-        const inputs = ['sliderSoc', 'sliderDuration', 'sliderCharger', 'sliderTemp', 'sliderAge', 'sliderQueue'];
-        inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', updateValuesAndPredict);
+        document.getElementById('btnSound').addEventListener('click', () => {
+            sfx.enabled = !sfx.enabled;
+            document.getElementById('txtSound').innerText = sfx.enabled ? 'Sound: ON' : 'Sound: OFF';
         });
-        document.getElementById('vehicleType').addEventListener('change', updateValuesAndPredict);
+
+        document.getElementById('btnResetCam').addEventListener('click', () => {
+            camera.position.set(7, 4.5, 8.5);
+            controls.target.set(0, 0.8, 0);
+        });
+
+        // ---------------------------------------------------------
+        // Interactive Prediction & Simulation Sync
+        // ---------------------------------------------------------
+        const inputs = ['sliderSoc', 'sliderDuration', 'sliderCharger', 'sliderTemp', 'sliderAge', 'sliderQueue'];
+        inputs.forEach(id => document.getElementById(id).addEventListener('input', () => {
+            const curPreset = document.getElementById('presetSelect').value;
+            if (curPreset !== 'custom' && curPreset !== 'custom_ev') {
+                document.getElementById('presetSelect').value = 'custom';
+                // Rule 1: Custom parameters trigger High Poly Custom EV
+                if (document.getElementById('vehicleType').value === 'car' && currentModelKey !== 'custom_ev') {
+                    setSketchfabModel('custom_ev');
+                }
+            }
+            updateValuesAndPredict();
+        }));
+
+        // Rule 2: 2-wheeler selection triggers standard common Electric Scooter
+        document.getElementById('vehicleType').addEventListener('change', (e) => {
+            const v = e.target.value;
+            if (v === 'two_wheeler') {
+                setSketchfabModel('electric_scooter');
+                document.getElementById('presetSelect').value = 'electric_scooter';
+            } else if (v === 'three_wheeler') {
+                setEngineMode('threejs');
+                switchVehicleModel('car');
+            } else {
+                setSketchfabModel('bmw_i7');
+                document.getElementById('presetSelect').value = 'bmw_i7';
+            }
+            switchVehicleModel(v);
+            sfx.playBeep(520, 0.08);
+            updateValuesAndPredict();
+        });
+
         document.getElementById('stationType').addEventListener('change', updateValuesAndPredict);
         document.getElementById('btnRecalc').addEventListener('click', updateValuesAndPredict);
 
-        // Preset selector logic
+        // Preset selector (Without Mahindra Treo)
         document.getElementById('presetSelect').addEventListener('change', (e) => {
             const val = e.target.value;
-            if (val === 'nexon') {
-                setPreset('car', 'Mall', 20, 60, 30.0, 28.0, 1.5, 1);
-            } else if (val === 'ola') {
-                setPreset('two_wheeler', 'Residential', 30, 90, 3.3, 25.0, 1.0, 0);
-            } else if (val === 'treo') {
-                setPreset('three_wheeler', 'Highway', 15, 45, 15.0, 32.0, 3.0, 3);
-            } else if (val === 'mg') {
-                setPreset('car', 'Highway', 10, 40, 50.0, 35.0, 0.5, 2);
+            if (val === 'bmw_i7') {
+                setPreset('car', 'Mall', 25, 45, 30.0, 28.0, 1.0, 1);
+                setSketchfabModel('bmw_i7');
+            } else if (val === 'tesla_roadster') {
+                setPreset('car', 'Highway', 15, 35, 50.0, 32.0, 0.8, 2);
+                setSketchfabModel('tesla_roadster');
+            } else if (val === 'custom_ev' || val === 'custom') {
+                // Rule 1: Custom EV
+                setPreset('car', 'Highway', 20, 50, 40.0, 30.0, 1.2, 1);
+                setSketchfabModel('custom_ev');
+            } else if (val === 'ola_scooter') {
+                setPreset('two_wheeler', 'Residential', 30, 80, 3.3, 25.0, 1.0, 0);
+                setSketchfabModel('ola_scooter');
+            } else if (val === 'electric_scooter') {
+                // Rule 2: Common 2-Wheeler
+                setPreset('two_wheeler', 'Residential', 20, 75, 3.3, 26.0, 1.5, 0);
+                setSketchfabModel('electric_scooter');
             }
-            sfx.playBeep(750, 0.08);
+            switchVehicleModel(document.getElementById('vehicleType').value);
+            sfx.playBeep(700, 0.08);
             updateValuesAndPredict();
         });
 
@@ -566,18 +1175,12 @@
             document.getElementById('sliderQueue').value = q;
         }
 
-        // Polynomial regressor engine matching trained Champion Model v2 weights exactly
+        // Polynomial regressor matching trained Champion Model v2
         function computeLocalPrediction(soc, mins, kw, temp, age, q, vType, stType) {
-            // Base equation derived from Gradient Boosting Champion Regressor on MP298
             let energy = 0.85 + (mins / 60.0) * (kw * 0.72) * (1.0 - (soc / 140.0));
-            // Temperature factor
-            if (temp > 35) {
-                energy *= (1.0 + (temp - 35) * 0.008);
-            }
-            // Station adjustments
+            if (temp > 35) energy *= (1.0 + (temp - 35) * 0.008);
             if (stType === 'Mall') energy *= 0.96;
             else if (stType === 'Highway') energy *= 1.04;
-            // Vehicle efficiency
             if (vType === 'two_wheeler') energy = Math.min(energy, 6.5);
             else if (vType === 'three_wheeler') energy = Math.min(energy, 12.0);
             return Math.max(1.5, Math.min(54.0, energy));
@@ -593,7 +1196,6 @@
             const vType = document.getElementById('vehicleType').value;
             const stType = document.getElementById('stationType').value;
 
-            // Update readouts
             document.getElementById('valSoc').innerText = `${soc}%`;
             document.getElementById('valDuration').innerText = `${mins} min`;
             document.getElementById('valCharger').innerText = `${kw.toFixed(1)} kW`;
@@ -608,31 +1210,22 @@
             const durWarn = document.getElementById('ruleDurationWarn');
             let isInvalid = false;
 
-            if (temp > 75.0) {
-                tempWarn.classList.remove('hidden');
-                isInvalid = true;
-            } else {
-                tempWarn.classList.add('hidden');
-            }
+            if (temp > 75.0) { tempWarn.classList.remove('hidden'); isInvalid = true; }
+            else { tempWarn.classList.add('hidden'); }
 
-            if (mins < 5) {
-                durWarn.classList.remove('hidden');
-                isInvalid = true;
-            } else {
-                durWarn.classList.add('hidden');
-            }
+            if (mins < 5) { durWarn.classList.remove('hidden'); isInvalid = true; }
+            else { durWarn.classList.add('hidden'); }
 
             if (isInvalid) {
                 document.getElementById('metricKwh').innerText = '422 ERR';
-                document.getElementById('metricKwh').className = 'text-2xl font-black text-rose-500 font-mono';
+                document.getElementById('metricKwh').className = 'text-2xl font-black text-rose-600 font-mono';
                 document.getElementById('metricCost').innerText = 'REJECTED';
                 document.getElementById('metricRate').innerText = '0.0 kW';
                 return;
             }
 
-            document.getElementById('metricKwh').className = 'text-2xl font-black text-emerald-400 font-mono';
+            document.getElementById('metricKwh').className = 'text-2xl font-black text-emerald-700 font-mono';
 
-            // Try Live FastAPI Server first, fallback to champion formula
             const payload = {
                 battery_start_pct: soc,
                 session_minutes: mins,
@@ -653,11 +1246,8 @@
             .then(res => res.json())
             .then(data => {
                 const latency = Math.round(performance.now() - tStart);
-                if (data.prediction) {
-                    displayResult(data.prediction, mins, latency, soc);
-                } else {
-                    useFallback(soc, mins, kw, temp, age, queue, vType, stType);
-                }
+                if (data.prediction) displayResult(data.prediction, mins, latency, soc);
+                else useFallback(soc, mins, kw, temp, age, queue, vType, stType);
             })
             .catch(() => {
                 useFallback(soc, mins, kw, temp, age, queue, vType, stType);
@@ -675,36 +1265,37 @@
             document.getElementById('metricCost').innerText = `₹ ${cost.toFixed(1)}`;
             const rate = (pred / (mins / 60.0));
             document.getElementById('metricRate').innerText = `${rate.toFixed(1)} kW`;
-            document.getElementById('metricLatency').innerText = `Inference: ${latency} ms`;
+            document.getElementById('metricLatency').innerText = `Latency: ${latency} ms`;
             const endSoc = Math.min(100, Math.round(soc + (pred / 40.0) * 100));
             document.getElementById('socText').innerText = `SOC: ${soc}% → ~${endSoc}%`;
         }
 
-        // Plug In Button Interaction
+        // Plug In & Start Button
         const btnPlug = document.getElementById('btnPlug');
         const statusInd = document.getElementById('statusIndicator');
         const statusText = document.getElementById('chargingStatusText');
 
         btnPlug.addEventListener('click', () => {
             isCharging = !isCharging;
+            updateChargingCable();
             if (isCharging) {
-                sfx.playElectricHum();
-                btnPlug.innerHTML = '⏹️ <span>Stop Charging</span>';
-                btnPlug.className = 'bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/25 transition-all transform active:scale-95 flex items-center gap-2';
-                statusInd.className = 'w-3 h-3 rounded-full bg-emerald-400 animate-ping';
-                statusText.innerText = '⚡ High-Power Charging in Progress...';
-                statusText.className = 'text-xs font-bold text-emerald-400';
+                sfx.playPlugSound();
+                btnPlug.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg><span>Stop Charging</span>`;
+                btnPlug.className = 'bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow-sm transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer';
+                statusInd.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-ping';
+                statusText.innerText = 'High-Power DC Fast Charging Active...';
+                statusText.className = 'text-xs font-bold text-emerald-700';
             } else {
                 sfx.playBeep(450, 0.1);
-                btnPlug.innerHTML = '⚡ <span>Plug In & Start</span>';
-                btnPlug.className = 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center gap-2';
-                statusInd.className = 'w-3 h-3 rounded-full bg-gray-500';
+                btnPlug.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Plug In & Start Charging</span>`;
+                btnPlug.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow-sm transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer';
+                statusInd.className = 'w-3 h-3 rounded-full bg-slate-400';
                 statusText.innerText = 'Session Completed';
-                statusText.className = 'text-xs font-bold text-gray-300';
+                statusText.className = 'text-xs font-bold text-slate-800';
             }
         });
 
-        // Initial calculation on load
+        // Initial Run
         updateValuesAndPredict();
     </script>
 </body>

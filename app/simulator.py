@@ -284,3 +284,4 @@ with tab_pipeline:
     - **Champion Model**: Gradient Boosting Regressor (v2) promoted after achieving **57.28% error reduction** over v1.
     - **GitHub Repo**: [https://github.com/itzzSPcoder/ev-charging-session-energy](https://github.com/itzzSPcoder/ev-charging-session-energy)
     """)
+
