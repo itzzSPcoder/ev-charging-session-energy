@@ -7,6 +7,7 @@ from typing import Literal
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from src.ev_charging.data import clean_vehicle_name
@@ -77,6 +78,15 @@ app = FastAPI(
     description="API for predicting energy delivered during an EV charging session.",
     lifespan=lifespan
 )
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    """Serve the 3D EV Charging Session Simulator."""
+    static_file = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(static_file):
+        return FileResponse(static_file)
+    return {"message": "EV Charging Session Energy API. Visit /docs or /health"}
 
 
 @app.get("/health")

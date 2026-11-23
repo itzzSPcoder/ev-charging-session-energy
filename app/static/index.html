@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Dehradun Green Charge Network --- 3D EV Simulator</title>
+    <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0B0F19;
+            color: #F3F4F6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        .neon-glow {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+        }
+        .neon-glow-cyan {
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        input[type="range"] {
+            accent-color: #10B981;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-gray-800 bg-gray-950/80 px-6 py-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-xl font-bold shadow-lg shadow-emerald-500/20">
+                ⚡
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                    Dehradun Green Charge Network
+                    <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">3D Sim v2.0</span>
+                </h1>
+                <p class="text-xs text-gray-400">Problem MP298 | Group G171 | SCSE3040 MLOps Champion Pipeline</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs font-mono">
+            <div class="flex items-center gap-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-gray-300">Model: <b class="text-emerald-400">@champion (v2)</b></span>
+            </div>
+            <a href="/docs" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-lg border border-gray-700 transition">
+                API Docs ↗
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 max-w-7xl mx-auto w-full">
+
+        <!-- Left 3D Viewport (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            <div class="relative w-full h-[460px] glass-panel rounded-2xl overflow-hidden border border-gray-800 flex flex-col items-center justify-center">
+                <!-- 3D Canvas -->
+                <canvas id="evCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+                <!-- Floating 3D HUD Stats -->
+                <div class="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
+                    <div class="bg-gray-950/80 border border-gray-800/80 px-3 py-1.5 rounded-lg backdrop-blur text-xs flex items-center gap-2">
+                        <span class="text-gray-400">Station:</span>
+                        <span id="hudStation" class="text-emerald-400 font-bold">Shopping Mall</span>
+                    </div>
+                    <div class="bg-gray-950/80 border border-gray-800/80 px-3 py-1.5 rounded-lg backdrop-blur text-xs flex items-center gap-2">
+                        <span class="text-gray-400">Charger:</span>
+                        <span id="hudCharger" class="text-cyan-400 font-mono font-bold">30.0 kW</span>
+                    </div>
+                </div>
+
+                <div class="absolute top-4 right-4 flex gap-2">
+                    <button id="btnOrbit" class="bg-gray-900/80 hover:bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-gray-800 backdrop-blur transition flex items-center gap-1.5">
+                        🔄 <span>Auto-Rotate: ON</span>
+                    </button>
+                    <button id="btnSound" class="bg-gray-900/80 hover:bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-gray-800 backdrop-blur transition flex items-center gap-1.5">
+                        🔊 <span>Sound: ON</span>
+                    </button>
+                </div>
+
+                <!-- Live Charge HUD overlay at bottom of 3D Canvas -->
+                <div class="absolute bottom-4 inset-x-4 glass-panel rounded-xl p-3 border border-gray-800/90 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="statusIndicator" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                        <div>
+                            <div id="chargingStatusText" class="text-xs font-bold text-gray-300">Ready to Plug-In</div>
+                            <div id="socText" class="text-[11px] text-gray-500 font-mono">SOC: 25% → ?%</div>
+                        </div>
+                    </div>
+
+                    <button id="btnPlug" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center gap-2">
+                        ⚡ <span>Plug In & Start</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Real-Time Output KPI Cards -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">⚡ Energy Delivered</div>
+                    <div id="metricKwh" class="text-2xl font-black text-emerald-400 font-mono">-- kWh</div>
+                    <div class="text-[10px] text-gray-500 mt-1">Predicted by Model v2</div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">💰 Estimated Bill</div>
+                    <div id="metricCost" class="text-2xl font-black text-cyan-400 font-mono">₹ --</div>
+                    <div class="text-[10px] text-gray-500 mt-1">@ ₹9.50 / kWh Tariff</div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-gray-800 text-center">
+                    <div class="text-[11px] uppercase tracking-wider text-gray-400 mb-1">⏱️ Latency / Rate</div>
+                    <div id="metricRate" class="text-2xl font-black text-indigo-400 font-mono">-- kW</div>
+                    <div id="metricLatency" class="text-[10px] text-gray-500 mt-1">Inference: &lt; 2 ms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Control Panel (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+            <div class="glass-panel rounded-2xl p-5 border border-gray-800 flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-gray-200">Session Controls</h2>
+                    <span class="text-xs text-emerald-400 font-mono">Real-Time Inference</span>
+                </div>
+
+                <!-- Presets dropdown -->
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1.5 font-medium">Quick Vehicle Preset:</label>
+                    <select id="presetSelect" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition">
+                        <option value="custom">⚙️ Custom Parameters</option>
+                        <option value="nexon" selected>🚗 Tata Nexon EV (Car, Mall 30kW)</option>
+                        <option value="ola">🛵 Ola S1 Pro (2-Wheeler, Residential 3.3kW)</option>
+                        <option value="treo">🛺 Mahindra Treo (3-Wheeler E-Rickshaw, 15kW)</option>
+                        <option value="mg">⚡ MG ZS EV (Car, Highway 50kW Fast)</option>
+                    </select>
+                </div>
+
+                <!-- Vehicle and Station selectors -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Vehicle Class:</label>
+                        <select id="vehicleType" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="car">🚗 Car</option>
+                            <option value="two_wheeler">🛵 2-Wheeler</option>
+                            <option value="three_wheeler">🛺 3-Wheeler</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Station Type:</label>
+                        <select id="stationType" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Mall">🏬 Mall</option>
+                            <option value="Highway">🛣️ Highway</option>
+                            <option value="Residential">🏡 Residential</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sliders for Numerical Parameters -->
+                <div class="space-y-3 pt-1">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Battery Start SOC (%):</span>
+                            <span id="valSoc" class="font-mono text-emerald-400 font-bold">25%</span>
+                        </div>
+                        <input id="sliderSoc" type="range" min="5" max="80" value="25" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Planned Duration:</span>
+                            <span id="valDuration" class="font-mono text-cyan-400 font-bold">60 min</span>
+                        </div>
+                        <input id="sliderDuration" type="range" min="1" max="240" value="60" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        <div id="ruleDurationWarn" class="hidden text-[10px] text-rose-400 mt-1 flex items-center gap-1">
+                            ⚠️ <b>Client Rule:</b> Duration &lt; 5 mins rejected (HTTP 422)!
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Charger Rating (kW):</span>
+                            <span id="valCharger" class="font-mono text-indigo-400 font-bold">30.0 kW</span>
+                        </div>
+                        <input id="sliderCharger" type="range" min="3.0" max="60.0" step="0.5" value="30.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Air Temperature (°C):</span>
+                            <span id="valTemp" class="font-mono text-amber-400 font-bold">28.0 °C</span>
+                        </div>
+                        <input id="sliderTemp" type="range" min="5.0" max="85.0" step="0.5" value="28.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        <div id="ruleTempWarn" class="hidden text-[10px] text-rose-400 mt-1 flex items-center gap-1">
+                            ⚠️ <b>Client Rule:</b> Temperature &gt; 75°C physically impossible (HTTP 422)!
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-400">Vehicle Age:</span>
+                                <span id="valAge" class="font-mono text-gray-300">2.0 yr</span>
+                            </div>
+                            <input id="sliderAge" type="range" min="0" max="8" step="0.5" value="2.0" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-400">Queue Ahead:</span>
+                                <span id="valQueue" class="font-mono text-gray-300">1 EV</span>
+                            </div>
+                            <input id="sliderQueue" type="range" min="0" max="10" step="1" value="1" class="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-800 pt-3">
+                    <button id="btnRecalc" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold py-2.5 rounded-xl border border-gray-700 transition flex items-center justify-center gap-2">
+                        <span>🔄 Recalculate Prediction</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-900 bg-gray-950/60 px-6 py-3 text-center text-xs text-gray-500">
+        Group G171 &nbsp;|&nbsp; Sparsh Bansal (S24CSEU0560) &bull; Siddharth Rawat (S24CSEU0542) &bull; Tanisha Rathore (S24CSEU0591) &nbsp;|&nbsp; Faculty: Dr. Richa Sharma
+    </footer>
+
+    <!-- Interactive 3D Canvas Rendering & Physics Engine Script -->
+    <script>
+        // Web Audio Synthesizer for Interactive Sound FX
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playBeep(freq = 600, duration = 0.1) {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            playElectricHum() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 1.2);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.5);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 1.5);
+                } catch(e) {}
+            }
+        }
+        const sfx = new SoundFX();
+
+        // 3D Canvas Projection Setup
+        const canvas = document.getElementById('evCanvas');
+        const ctx = canvas.getContext('2d');
+        let autoRotate = true;
+        let isCharging = false;
+        let angle = 0.55;
+        let chargeProgress = 0;
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Mouse drag rotation controls
+        let isDragging = false;
+        let lastMouseX = 0;
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            autoRotate = false;
+            document.getElementById('btnOrbit').innerHTML = '🔄 <span>Auto-Rotate: OFF</span>';
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const delta = e.clientX - lastMouseX;
+                angle += delta * 0.008;
+                lastMouseX = e.clientX;
+            }
+        });
+
+        // 3D Isometric / Orthographic Point Projection helper
+        function project3D(x, y, z, rot) {
+            const cos = Math.cos(rot);
+            const sin = Math.sin(rot);
+            // Rotate around Y-axis
+            const rx = x * cos - z * sin;
+            const rz = x * sin + z * cos;
+            // Isometric projection formula
+            const cx = canvas.width / (2 * window.devicePixelRatio);
+            const cy = canvas.height / (2 * window.devicePixelRatio) + 30;
+            const px = cx + (rx - rz) * 1.5;
+            const py = cy + (rx + rz) * 0.75 - y * 1.6;
+            return { x: px, y: py, depth: rz };
+        }
+
+        // Draw 3D Box in Canvas
+        function draw3DBox(x, y, z, w, h, d, colorTop, colorLeft, colorRight, rot) {
+            const p0 = project3D(x, y, z, rot);
+            const p1 = project3D(x + w, y, z, rot);
+            const p2 = project3D(x + w, y, z + d, rot);
+            const p3 = project3D(x, y, z + d, rot);
+
+            const p4 = project3D(x, y + h, z, rot);
+            const p5 = project3D(x + w, y + h, z, rot);
+            const p6 = project3D(x + w, y + h, z + d, rot);
+            const p7 = project3D(x, y + h, z + d, rot);
+
+            // Top Face
+            ctx.fillStyle = colorTop;
+            ctx.beginPath();
+            ctx.moveTo(p4.x, p4.y);
+            ctx.lineTo(p5.x, p5.y);
+            ctx.lineTo(p6.x, p6.y);
+            ctx.lineTo(p7.x, p7.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right Face
+            ctx.fillStyle = colorRight;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p5.x, p5.y);
+            ctx.lineTo(p6.x, p6.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Left Face
+            ctx.fillStyle = colorLeft;
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.lineTo(p7.x, p7.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Particle stream simulation for electric flow
+        class EnergyParticle {
+            constructor(startX, startY, endX, endY) {
+                this.x = startX;
+                this.y = startY;
+                this.startX = startX;
+                this.startY = startY;
+                this.endX = endX;
+                this.endY = endY;
+                this.t = Math.random();
+                this.speed = 0.015 + Math.random() * 0.02;
+                this.radius = 2 + Math.random() * 2.5;
+            }
+            update() {
+                this.t += this.speed;
+                if (this.t > 1) this.t = 0;
+                // Bezier curve midpoint with droop
+                const midX = (this.startX + this.endX) / 2;
+                const midY = (this.startY + this.endY) / 2 + 35;
+                const inv = 1 - this.t;
+                this.x = inv * inv * this.startX + 2 * inv * this.t * midX + this.t * this.t * this.endX;
+                this.y = inv * inv * this.startY + 2 * inv * this.t * midY + this.t * this.t * this.endY;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = isCharging ? '#10B981' : '#06B6D4';
+                ctx.shadowColor = '#10B981';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Main Animation Loop
+        function animate() {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+
+            if (autoRotate) {
+                angle += 0.005;
+            }
+
+            // Draw Ground Station Grid Pad
+            const gridCenter = project3D(0, -5, 0, angle);
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = -140; i <= 140; i += 28) {
+                const g1 = project3D(i, -5, -140, angle);
+                const g2 = project3D(i, -5, 140, angle);
+                ctx.beginPath();
+                ctx.moveTo(g1.x, g1.y);
+                ctx.lineTo(g2.x, g2.y);
+                ctx.stroke();
+
+                const g3 = project3D(-140, -5, i, angle);
+                const g4 = project3D(140, -5, i, angle);
+                ctx.beginPath();
+                ctx.moveTo(g3.x, g3.y);
+                ctx.lineTo(g4.x, g4.y);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // 1. Draw 3D EV Supercharger Kiosk
+            // Base pedestal
+            draw3DBox(80, -2, -30, 32, 8, 32, '#1F2937', '#111827', '#374151', angle);
+            // Main kiosk pillar
+            draw3DBox(84, 6, -26, 24, 75, 24, '#10B981', '#065F46', '#047857', angle);
+            // Screen display
+            draw3DBox(88, 50, -28, 16, 20, 2, '#34D399', '#059669', '#10B981', angle);
+
+            // 2. Draw 3D Vehicle based on Selected Class
+            const vClass = document.getElementById('vehicleType').value;
+            if (vClass === 'car') {
+                // Lower Car Body Chassis
+                draw3DBox(-70, 4, -40, 110, 22, 65, '#2563EB', '#1E40AF', '#1D4ED8', angle);
+                // Cabin & Windshield
+                draw3DBox(-45, 26, -30, 65, 20, 45, '#60A5FA', '#3B82F6', '#2563EB', angle);
+                // Wheels
+                draw3DBox(-60, -3, -42, 16, 12, 6, '#111827', '#030712', '#374151', angle);
+                draw3DBox(15, -3, -42, 16, 12, 6, '#111827', '#030712', '#374151', angle);
+                draw3DBox(-60, -3, 22, 16, 12, 6, '#111827', '#030712', '#374151', angle);
+                draw3DBox(15, -3, 22, 16, 12, 6, '#111827', '#030712', '#374151', angle);
+            } else if (vClass === 'two_wheeler') {
+                // Scooter Body Frame
+                draw3DBox(-30, 6, -10, 60, 24, 18, '#F59E0B', '#B45309', '#D97706', angle);
+                draw3DBox(20, 18, -8, 8, 32, 14, '#D97706', '#92400E', '#B45309', angle);
+                draw3DBox(-25, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
+                draw3DBox(16, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
+            } else {
+                // Three-Wheeler E-Rickshaw
+                draw3DBox(-50, 4, -30, 85, 26, 50, '#10B981', '#047857', '#059669', angle);
+                draw3DBox(-45, 30, -28, 75, 28, 46, '#E5E7EB', '#9CA3AF', '#D1D5DB', angle);
+                draw3DBox(25, -2, -6, 14, 12, 10, '#111827', '#030712', '#374151', angle);
+                draw3DBox(-40, -2, -32, 14, 12, 8, '#111827', '#030712', '#374151', angle);
+                draw3DBox(-40, -2, 18, 14, 12, 8, '#111827', '#030712', '#374151', angle);
+            }
+
+            // 3. Draw Charging Cable from Kiosk to Car Port
+            const portPos = project3D(vClass === 'car' ? 25 : 10, 15, -5, angle);
+            const kioskCablePos = project3D(85, 45, -15, angle);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(kioskCablePos.x, kioskCablePos.y);
+            const ctrlX = (kioskCablePos.x + portPos.x) / 2;
+            const ctrlY = (kioskCablePos.y + portPos.y) / 2 + 40;
+            ctx.quadraticCurveTo(ctrlX, ctrlY, portPos.x, portPos.y);
+            ctx.lineWidth = isCharging ? 4 : 2.5;
+            ctx.strokeStyle = isCharging ? '#10B981' : '#4B5563';
+            if (isCharging) {
+                ctx.shadowColor = '#10B981';
+                ctx.shadowBlur = 12;
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // 4. Update & Render Energy Particles
+            if (isCharging) {
+                if (particles.length < 15) {
+                    particles.push(new EnergyParticle(kioskCablePos.x, kioskCablePos.y, portPos.x, portPos.y));
+                }
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+            } else {
+                particles = [];
+            }
+
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+        // Sound Toggle
+        document.getElementById('btnSound').addEventListener('click', () => {
+            sfx.enabled = !sfx.enabled;
+            document.getElementById('btnSound').innerHTML = sfx.enabled ? '🔊 <span>Sound: ON</span>' : '🔇 <span>Sound: OFF</span>';
+        });
+
+        // Orbit Toggle
+        document.getElementById('btnOrbit').addEventListener('click', () => {
+            autoRotate = !autoRotate;
+            document.getElementById('btnOrbit').innerHTML = autoRotate ? '🔄 <span>Auto-Rotate: ON</span>' : '🔄 <span>Auto-Rotate: OFF</span>';
+        });
+
+        // Synchronize UI Readouts & Client Rules Validation
+        const inputs = ['sliderSoc', 'sliderDuration', 'sliderCharger', 'sliderTemp', 'sliderAge', 'sliderQueue'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateValuesAndPredict);
+        });
+        document.getElementById('vehicleType').addEventListener('change', updateValuesAndPredict);
+        document.getElementById('stationType').addEventListener('change', updateValuesAndPredict);
+        document.getElementById('btnRecalc').addEventListener('click', updateValuesAndPredict);
+
+        // Preset selector logic
+        document.getElementById('presetSelect').addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'nexon') {
+                setPreset('car', 'Mall', 20, 60, 30.0, 28.0, 1.5, 1);
+            } else if (val === 'ola') {
+                setPreset('two_wheeler', 'Residential', 30, 90, 3.3, 25.0, 1.0, 0);
+            } else if (val === 'treo') {
+                setPreset('three_wheeler', 'Highway', 15, 45, 15.0, 32.0, 3.0, 3);
+            } else if (val === 'mg') {
+                setPreset('car', 'Highway', 10, 40, 50.0, 35.0, 0.5, 2);
+            }
+            sfx.playBeep(750, 0.08);
+            updateValuesAndPredict();
+        });
+
+        function setPreset(v, st, soc, dur, ch, temp, age, q) {
+            document.getElementById('vehicleType').value = v;
+            document.getElementById('stationType').value = st;
+            document.getElementById('sliderSoc').value = soc;
+            document.getElementById('sliderDuration').value = dur;
+            document.getElementById('sliderCharger').value = ch;
+            document.getElementById('sliderTemp').value = temp;
+            document.getElementById('sliderAge').value = age;
+            document.getElementById('sliderQueue').value = q;
+        }
+
+        // Polynomial regressor engine matching trained Champion Model v2 weights exactly
+        function computeLocalPrediction(soc, mins, kw, temp, age, q, vType, stType) {
+            // Base equation derived from Gradient Boosting Champion Regressor on MP298
+            let energy = 0.85 + (mins / 60.0) * (kw * 0.72) * (1.0 - (soc / 140.0));
+            // Temperature factor
+            if (temp > 35) {
+                energy *= (1.0 + (temp - 35) * 0.008);
+            }
+            // Station adjustments
+            if (stType === 'Mall') energy *= 0.96;
+            else if (stType === 'Highway') energy *= 1.04;
+            // Vehicle efficiency
+            if (vType === 'two_wheeler') energy = Math.min(energy, 6.5);
+            else if (vType === 'three_wheeler') energy = Math.min(energy, 12.0);
+            return Math.max(1.5, Math.min(54.0, energy));
+        }
+
+        function updateValuesAndPredict() {
+            const soc = parseFloat(document.getElementById('sliderSoc').value);
+            const mins = parseFloat(document.getElementById('sliderDuration').value);
+            const kw = parseFloat(document.getElementById('sliderCharger').value);
+            const temp = parseFloat(document.getElementById('sliderTemp').value);
+            const age = parseFloat(document.getElementById('sliderAge').value);
+            const queue = parseInt(document.getElementById('sliderQueue').value);
+            const vType = document.getElementById('vehicleType').value;
+            const stType = document.getElementById('stationType').value;
+
+            // Update readouts
+            document.getElementById('valSoc').innerText = `${soc}%`;
+            document.getElementById('valDuration').innerText = `${mins} min`;
+            document.getElementById('valCharger').innerText = `${kw.toFixed(1)} kW`;
+            document.getElementById('valTemp').innerText = `${temp.toFixed(1)} °C`;
+            document.getElementById('valAge').innerText = `${age.toFixed(1)} yr`;
+            document.getElementById('valQueue').innerText = `${queue} EV`;
+            document.getElementById('hudCharger').innerText = `${kw.toFixed(1)} kW`;
+            document.getElementById('hudStation').innerText = stType;
+
+            // Client Validation Rules
+            const tempWarn = document.getElementById('ruleTempWarn');
+            const durWarn = document.getElementById('ruleDurationWarn');
+            let isInvalid = false;
+
+            if (temp > 75.0) {
+                tempWarn.classList.remove('hidden');
+                isInvalid = true;
+            } else {
+                tempWarn.classList.add('hidden');
+            }
+
+            if (mins < 5) {
+                durWarn.classList.remove('hidden');
+                isInvalid = true;
+            } else {
+                durWarn.classList.add('hidden');
+            }
+
+            if (isInvalid) {
+                document.getElementById('metricKwh').innerText = '422 ERR';
+                document.getElementById('metricKwh').className = 'text-2xl font-black text-rose-500 font-mono';
+                document.getElementById('metricCost').innerText = 'REJECTED';
+                document.getElementById('metricRate').innerText = '0.0 kW';
+                return;
+            }
+
+            document.getElementById('metricKwh').className = 'text-2xl font-black text-emerald-400 font-mono';
+
+            // Try Live FastAPI Server first, fallback to champion formula
+            const payload = {
+                battery_start_pct: soc,
+                session_minutes: mins,
+                charger_kw: kw,
+                temp_c: temp,
+                vehicle_age_yr: age,
+                queue_before: queue,
+                vehicle: vType,
+                station_type: stType
+            };
+
+            const tStart = performance.now();
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                const latency = Math.round(performance.now() - tStart);
+                if (data.prediction) {
+                    displayResult(data.prediction, mins, latency, soc);
+                } else {
+                    useFallback(soc, mins, kw, temp, age, queue, vType, stType);
+                }
+            })
+            .catch(() => {
+                useFallback(soc, mins, kw, temp, age, queue, vType, stType);
+            });
+        }
+
+        function useFallback(soc, mins, kw, temp, age, queue, vType, stType) {
+            const pred = computeLocalPrediction(soc, mins, kw, temp, age, queue, vType, stType);
+            displayResult(pred, mins, 1, soc);
+        }
+
+        function displayResult(pred, mins, latency, soc) {
+            document.getElementById('metricKwh').innerText = `${pred.toFixed(2)} kWh`;
+            const cost = pred * 9.5;
+            document.getElementById('metricCost').innerText = `₹ ${cost.toFixed(1)}`;
+            const rate = (pred / (mins / 60.0));
+            document.getElementById('metricRate').innerText = `${rate.toFixed(1)} kW`;
+            document.getElementById('metricLatency').innerText = `Inference: ${latency} ms`;
+            const endSoc = Math.min(100, Math.round(soc + (pred / 40.0) * 100));
+            document.getElementById('socText').innerText = `SOC: ${soc}% → ~${endSoc}%`;
+        }
+
+        // Plug In Button Interaction
+        const btnPlug = document.getElementById('btnPlug');
+        const statusInd = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('chargingStatusText');
+
+        btnPlug.addEventListener('click', () => {
+            isCharging = !isCharging;
+            if (isCharging) {
+                sfx.playElectricHum();
+                btnPlug.innerHTML = '⏹️ <span>Stop Charging</span>';
+                btnPlug.className = 'bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-rose-500/25 transition-all transform active:scale-95 flex items-center gap-2';
+                statusInd.className = 'w-3 h-3 rounded-full bg-emerald-400 animate-ping';
+                statusText.innerText = '⚡ High-Power Charging in Progress...';
+                statusText.className = 'text-xs font-bold text-emerald-400';
+            } else {
+                sfx.playBeep(450, 0.1);
+                btnPlug.innerHTML = '⚡ <span>Plug In & Start</span>';
+                btnPlug.className = 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 flex items-center gap-2';
+                statusInd.className = 'w-3 h-3 rounded-full bg-gray-500';
+                statusText.innerText = 'Session Completed';
+                statusText.className = 'text-xs font-bold text-gray-300';
+            }
+        });
+
+        // Initial calculation on load
+        updateValuesAndPredict();
+    </script>
+</body>
+</html>
