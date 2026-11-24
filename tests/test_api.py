@@ -83,3 +83,22 @@ def test_predict_missing_required_field_rejected(client):
     }
     response = client.post("/predict", json=payload)
     assert response.status_code == 422
+
+
+def test_predict_messy_vehicle_normalized(client):
+    """Verify input mapping inside /predict uses clean_vehicle_name to map raw spellings."""
+    for messy_name in ["TWO_WHEELER", " car ", "Three_Wheeler", "thr."]:
+        payload = {
+            "battery_start_pct": 35.0,
+            "session_minutes": 60.0,
+            "charger_kw": 25.0,
+            "temp_c": 25.0,
+            "vehicle_age_yr": 3.0,
+            "queue_before": 2,
+            "vehicle": messy_name,
+            "station_type": "Mall"
+        }
+        response = client.post("/predict", json=payload)
+        assert response.status_code == 200
+        assert "prediction" in response.json()
+
