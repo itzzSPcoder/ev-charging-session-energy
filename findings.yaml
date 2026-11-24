@@ -31,9 +31,9 @@ data_issues:
     true_levels: 3
 tracking:
   experiment_name: ev_charging_session_energy
-  best_run_id: 50450d02ac7b4a80a63c150fce55d9aa
+  best_run_id: a5d7b587ec3d4620b1849e7c75974041
   registered_model_name: ev_charging_model
-  champion_version: 2
+  champion_version: 4
 monitoring:
   psi:
     battery_start_pct: 0.0282
