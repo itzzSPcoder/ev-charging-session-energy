@@ -1,5 +1,6 @@
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from src.ev_charging.metrics import compute_psi
 
 NUMERIC_FEATURES = [
     "battery_start_pct",
@@ -31,4 +32,5 @@ def build_preprocessor() -> ColumnTransformer:
         ]
     )
     return preprocessor
+
 

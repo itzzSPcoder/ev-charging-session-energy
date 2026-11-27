@@ -42,6 +42,8 @@ monitoring:
     temp_c: 3.6203
     vehicle_age_yr: 0.0274
     queue_before: 0.0275
+  drifting_features:
+    - temp_c
   most_drifted_feature: temp_c
   mae_by_group:
     Highway: 5.1418

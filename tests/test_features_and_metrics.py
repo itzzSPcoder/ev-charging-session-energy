@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from src.ev_charging.metrics import compute_mae, compute_psi, compute_slice_mae
-from src.ev_charging.features import ALL_FEATURES, TARGET
+from src.ev_charging.features import ALL_FEATURES, TARGET, compute_psi as features_compute_psi
 from src.ev_charging.models import get_model_pipeline
 
 
@@ -25,6 +25,10 @@ def test_compute_psi_stability():
 
     assert psi_same < 0.1  # very stable
     assert psi_shifted > 0.5  # significant drift
+
+    # Verify features export of compute_psi
+    assert features_compute_psi(ref, same, num_bins=10) == psi_same
+
 
 
 def test_model_pipeline_synthetic_fit_and_predict():
